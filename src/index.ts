@@ -6,6 +6,7 @@ export type {
   DitherMethod,
   Palette,
   PalettePreset,
+  WatermarkLayer,
 } from "./types.js";
 
 import { ForgeConnectionError, ForgeServerError } from "./error.js";
@@ -17,6 +18,7 @@ import type {
   OutputFormat,
   Palette,
   RenderPayload,
+  WatermarkLayer,
 } from "./types.js";
 
 /** Options for creating a ForgeClient. */
@@ -94,6 +96,14 @@ export class RenderRequestBuilder {
   private _pdfKeywords?: string;
   private _pdfCreator?: string;
   private _pdfBookmarks?: boolean;
+  private _pdfWatermarkText?: string;
+  private _pdfWatermarkImage?: string;
+  private _pdfWatermarkOpacity?: number;
+  private _pdfWatermarkRotation?: number;
+  private _pdfWatermarkColor?: string;
+  private _pdfWatermarkFontSize?: number;
+  private _pdfWatermarkScale?: number;
+  private _pdfWatermarkLayer?: WatermarkLayer;
 
   /** @internal */
   constructor(
@@ -219,6 +229,54 @@ export class RenderRequestBuilder {
     return this;
   }
 
+  /** PDF watermark: text to render as watermark. */
+  pdfWatermarkText(text: string): this {
+    this._pdfWatermarkText = text;
+    return this;
+  }
+
+  /** PDF watermark: base64-encoded image data. */
+  pdfWatermarkImage(base64Data: string): this {
+    this._pdfWatermarkImage = base64Data;
+    return this;
+  }
+
+  /** PDF watermark: opacity (0.0 to 1.0). */
+  pdfWatermarkOpacity(opacity: number): this {
+    this._pdfWatermarkOpacity = opacity;
+    return this;
+  }
+
+  /** PDF watermark: rotation in degrees. */
+  pdfWatermarkRotation(degrees: number): this {
+    this._pdfWatermarkRotation = degrees;
+    return this;
+  }
+
+  /** PDF watermark: text color as hex string. */
+  pdfWatermarkColor(hex: string): this {
+    this._pdfWatermarkColor = hex;
+    return this;
+  }
+
+  /** PDF watermark: font size in points. */
+  pdfWatermarkFontSize(size: number): this {
+    this._pdfWatermarkFontSize = size;
+    return this;
+  }
+
+  /** PDF watermark: image scale factor. */
+  pdfWatermarkScale(scale: number): this {
+    this._pdfWatermarkScale = scale;
+    return this;
+  }
+
+  /** PDF watermark: layer position (over or under content). */
+  pdfWatermarkLayer(layer: WatermarkLayer): this {
+    this._pdfWatermarkLayer = layer;
+    return this;
+  }
+
   /** Build the JSON payload. @internal */
   buildPayload(): RenderPayload {
     const payload: RenderPayload = { format: this._format };
@@ -247,13 +305,24 @@ export class RenderRequestBuilder {
       payload.quantize = q;
     }
 
+    const hasWatermark =
+      this._pdfWatermarkText !== undefined ||
+      this._pdfWatermarkImage !== undefined ||
+      this._pdfWatermarkOpacity !== undefined ||
+      this._pdfWatermarkRotation !== undefined ||
+      this._pdfWatermarkColor !== undefined ||
+      this._pdfWatermarkFontSize !== undefined ||
+      this._pdfWatermarkScale !== undefined ||
+      this._pdfWatermarkLayer !== undefined;
+
     if (
       this._pdfTitle !== undefined ||
       this._pdfAuthor !== undefined ||
       this._pdfSubject !== undefined ||
       this._pdfKeywords !== undefined ||
       this._pdfCreator !== undefined ||
-      this._pdfBookmarks !== undefined
+      this._pdfBookmarks !== undefined ||
+      hasWatermark
     ) {
       const p: NonNullable<RenderPayload["pdf"]> = {};
       if (this._pdfTitle !== undefined) p.title = this._pdfTitle;
@@ -262,6 +331,18 @@ export class RenderRequestBuilder {
       if (this._pdfKeywords !== undefined) p.keywords = this._pdfKeywords;
       if (this._pdfCreator !== undefined) p.creator = this._pdfCreator;
       if (this._pdfBookmarks !== undefined) p.bookmarks = this._pdfBookmarks;
+      if (hasWatermark) {
+        const wm: NonNullable<NonNullable<RenderPayload["pdf"]>["watermark"]> = {};
+        if (this._pdfWatermarkText !== undefined) wm.text = this._pdfWatermarkText;
+        if (this._pdfWatermarkImage !== undefined) wm.image_data = this._pdfWatermarkImage;
+        if (this._pdfWatermarkOpacity !== undefined) wm.opacity = this._pdfWatermarkOpacity;
+        if (this._pdfWatermarkRotation !== undefined) wm.rotation = this._pdfWatermarkRotation;
+        if (this._pdfWatermarkColor !== undefined) wm.color = this._pdfWatermarkColor;
+        if (this._pdfWatermarkFontSize !== undefined) wm.font_size = this._pdfWatermarkFontSize;
+        if (this._pdfWatermarkScale !== undefined) wm.scale = this._pdfWatermarkScale;
+        if (this._pdfWatermarkLayer !== undefined) wm.layer = this._pdfWatermarkLayer;
+        p.watermark = wm;
+      }
       payload.pdf = p;
     }
 

@@ -90,6 +90,20 @@ const pdf = await client.renderHtml("<h1>Report</h1><h2>Section 1</h2>")
   .send();
 ```
 
+### PDF Watermarks
+
+Add text or image watermarks to each page.
+
+```typescript
+const pdf = await client.renderHtml("<h1>Draft Report</h1>")
+  .pdfWatermarkText("DRAFT")
+  .pdfWatermarkOpacity(0.15)
+  .pdfWatermarkRotation(-45)
+  .pdfWatermarkColor("#888888")
+  .pdfWatermarkLayer("over")
+  .send();
+```
+
 ### Custom Timeout
 
 ```typescript
@@ -149,6 +163,14 @@ All methods return `this` for chaining. Call `.send()` to execute.
 | `pdfKeywords` | `string` | PDF keywords (comma-separated) |
 | `pdfCreator` | `string` | PDF creator application name |
 | `pdfBookmarks` | `boolean` | Generate bookmarks from headings |
+| `pdfWatermarkText` | `string` | Watermark text on each page |
+| `pdfWatermarkImage` | `string` | Base64-encoded PNG/JPEG watermark image |
+| `pdfWatermarkOpacity` | `number` | Watermark opacity (0.0-1.0, default: 0.15) |
+| `pdfWatermarkRotation` | `number` | Watermark rotation in degrees (default: -45) |
+| `pdfWatermarkColor` | `string` | Watermark text color as hex (default: #888888) |
+| `pdfWatermarkFontSize` | `number` | Watermark font size in PDF points (default: auto) |
+| `pdfWatermarkScale` | `number` | Watermark image scale (0.0-1.0, default: 0.5) |
+| `pdfWatermarkLayer` | `WatermarkLayer` | Layer position: `"over"` or `"under"` |
 
 | Terminal Method | Returns | Description |
 |-----------------|---------|-------------|
@@ -163,6 +185,7 @@ type Flow = "auto" | "paginate" | "continuous";
 type DitherMethod = "none" | "floyd-steinberg" | "atkinson" | "ordered";
 type PalettePreset = "auto" | "bw" | "grayscale" | "eink";
 type Palette = PalettePreset | string[];
+type WatermarkLayer = "over" | "under";
 ```
 
 ### Errors

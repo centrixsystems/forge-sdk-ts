@@ -10,6 +10,9 @@ export type Flow = "auto" | "paginate" | "continuous";
 /** Dithering algorithm for color quantization. */
 export type DitherMethod = "none" | "floyd-steinberg" | "atkinson" | "ordered";
 
+/** Watermark layer position. */
+export type WatermarkLayer = "over" | "under";
+
 /** Built-in color palette presets. */
 export type PalettePreset = "auto" | "bw" | "grayscale" | "eink";
 
@@ -42,6 +45,16 @@ export interface RenderPayload {
     keywords?: string;
     creator?: string;
     bookmarks?: boolean;
+    watermark?: {
+      text?: string;
+      image_data?: string;
+      opacity?: number;
+      rotation?: number;
+      color?: string;
+      font_size?: number;
+      scale?: number;
+      layer?: WatermarkLayer;
+    };
   };
 }
 
