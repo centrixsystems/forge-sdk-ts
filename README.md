@@ -104,6 +104,29 @@ const pdf = await client.renderHtml("<h1>Draft Report</h1>")
   .send();
 ```
 
+### PDF/A Standard and Embedded Files
+
+Generate PDF/A-3b compliant documents with embedded file attachments (e.g. ZUGFeRD invoices).
+
+```typescript
+import { ForgeClient, PdfStandard, EmbedRelationship } from "@centrix/forge-sdk";
+import { readFile } from "node:fs/promises";
+
+const xmlData = await readFile("invoice.xml");
+const base64 = Buffer.from(xmlData).toString("base64");
+
+const pdf = await client.renderHtml("<h1>Invoice</h1>")
+  .format("pdf")
+  .paper("a4")
+  .pdfStandard(PdfStandard.A3B)
+  .pdfAttach("invoice.xml", base64, {
+    mimeType: "application/xml",
+    description: "ZUGFeRD invoice data",
+    relationship: EmbedRelationship.Alternative,
+  })
+  .send();
+```
+
 ### Custom Timeout
 
 ```typescript
@@ -171,6 +194,8 @@ All methods return `this` for chaining. Call `.send()` to execute.
 | `pdfWatermarkFontSize` | `number` | Watermark font size in PDF points (default: auto) |
 | `pdfWatermarkScale` | `number` | Watermark image scale (0.0-1.0, default: 0.5) |
 | `pdfWatermarkLayer` | `WatermarkLayer` | Layer position: `"over"` or `"under"` |
+| `pdfStandard(standard)` | `PdfStandard` | PDF standard: `PdfStandard.None`, `A2B`, `A3B` |
+| `pdfAttach(path, data, options?)` | | Embed file in PDF (base64 data) |
 
 | Terminal Method | Returns | Description |
 |-----------------|---------|-------------|
@@ -186,6 +211,17 @@ type DitherMethod = "none" | "floyd-steinberg" | "atkinson" | "ordered";
 type PalettePreset = "auto" | "bw" | "grayscale" | "eink";
 type Palette = PalettePreset | string[];
 type WatermarkLayer = "over" | "under";
+
+enum PdfStandard { None = "none", A2B = "pdf/a-2b", A3B = "pdf/a-3b" }
+enum EmbedRelationship { Alternative = "alternative", Supplement = "supplement", Data = "data", Source = "source", Unspecified = "unspecified" }
+
+interface EmbeddedFilePayload {
+  path: string;
+  data: string;          // base64-encoded
+  mime_type?: string;
+  description?: string;
+  relationship?: EmbedRelationship;
+}
 ```
 
 ### Errors

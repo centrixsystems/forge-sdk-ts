@@ -1,4 +1,8 @@
 export { ForgeError, ForgeServerError, ForgeConnectionError } from "./error.js";
+export {
+  PdfStandard,
+  EmbedRelationship,
+} from "./types.js";
 export type {
   OutputFormat,
   Orientation,
@@ -7,11 +11,17 @@ export type {
   Palette,
   PalettePreset,
   WatermarkLayer,
+  EmbeddedFilePayload,
 } from "./types.js";
 
 import { ForgeConnectionError, ForgeServerError } from "./error.js";
+import {
+  PdfStandard,
+  EmbedRelationship,
+} from "./types.js";
 import type {
   DitherMethod,
+  EmbeddedFilePayload,
   ErrorResponse,
   Flow,
   Orientation,
@@ -104,6 +114,8 @@ export class RenderRequestBuilder {
   private _pdfWatermarkFontSize?: number;
   private _pdfWatermarkScale?: number;
   private _pdfWatermarkLayer?: WatermarkLayer;
+  private _pdfStandard?: PdfStandard;
+  private _pdfEmbeddedFiles: EmbeddedFilePayload[] = [];
 
   /** @internal */
   constructor(
@@ -277,6 +289,26 @@ export class RenderRequestBuilder {
     return this;
   }
 
+  /** PDF standard compliance level (e.g. PDF/A-2b, PDF/A-3b). */
+  pdfStandard(standard: PdfStandard): this {
+    this._pdfStandard = standard;
+    return this;
+  }
+
+  /** Embed a file attachment in the PDF. Data must be base64-encoded. */
+  pdfAttach(
+    path: string,
+    data: string,
+    options?: { mimeType?: string; description?: string; relationship?: EmbedRelationship }
+  ): this {
+    const entry: EmbeddedFilePayload = { path, data };
+    if (options?.mimeType) entry.mime_type = options.mimeType;
+    if (options?.description) entry.description = options.description;
+    if (options?.relationship) entry.relationship = options.relationship;
+    this._pdfEmbeddedFiles.push(entry);
+    return this;
+  }
+
   /** Build the JSON payload. @internal */
   buildPayload(): RenderPayload {
     const payload: RenderPayload = { format: this._format };
@@ -322,6 +354,8 @@ export class RenderRequestBuilder {
       this._pdfKeywords !== undefined ||
       this._pdfCreator !== undefined ||
       this._pdfBookmarks !== undefined ||
+      this._pdfStandard !== undefined ||
+      this._pdfEmbeddedFiles.length > 0 ||
       hasWatermark
     ) {
       const p: NonNullable<RenderPayload["pdf"]> = {};
@@ -331,6 +365,8 @@ export class RenderRequestBuilder {
       if (this._pdfKeywords !== undefined) p.keywords = this._pdfKeywords;
       if (this._pdfCreator !== undefined) p.creator = this._pdfCreator;
       if (this._pdfBookmarks !== undefined) p.bookmarks = this._pdfBookmarks;
+      if (this._pdfStandard !== undefined) p.standard = this._pdfStandard;
+      if (this._pdfEmbeddedFiles.length > 0) p.embedded_files = this._pdfEmbeddedFiles;
       if (hasWatermark) {
         const wm: NonNullable<NonNullable<RenderPayload["pdf"]>["watermark"]> = {};
         if (this._pdfWatermarkText !== undefined) wm.text = this._pdfWatermarkText;
