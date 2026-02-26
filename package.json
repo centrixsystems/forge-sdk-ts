@@ -1,0 +1,35 @@
+{
+  "name": "@centrix/forge-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the Forge rendering engine",
+  "license": "MIT",
+  "repository": "https://github.com/centrixsystems/forge-sdk-ts",
+  "keywords": [
+    "forge",
+    "pdf",
+    "rendering",
+    "html",
+    "screenshot"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/test.js",
+    "prepublishOnly": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "typescript": "^5.0.0"
+  }
+}
