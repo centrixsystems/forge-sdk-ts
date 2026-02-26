@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { ForgeClient, RenderRequestBuilder } from "./index.js";
+import { ForgeClient, RenderRequestBuilder, BarcodeType, BarcodeAnchor } from "./index.js";
 
 describe("ForgeClient", () => {
   it("strips trailing slash from base URL", () => {
@@ -133,5 +133,66 @@ describe("RenderRequestBuilder", () => {
       .buildPayload();
 
     assert.equal(payload.pdf, undefined);
+  });
+
+  it("builds pdf barcode payload", () => {
+    const payload = client
+      .renderHtml("<h1>Invoice</h1>")
+      .pdfBarcode(BarcodeType.Qr, "https://example.com/inv/123", {
+        x: 450,
+        y: 50,
+        width: 100,
+        height: 100,
+        anchor: BarcodeAnchor.TopRight,
+        foreground: "#000000",
+        background: "#ffffff",
+        drawBackground: true,
+        pages: "1",
+      })
+      .buildPayload();
+
+    assert.deepEqual(payload.pdf?.barcodes, [
+      {
+        type: "qr",
+        data: "https://example.com/inv/123",
+        x: 450,
+        y: 50,
+        width: 100,
+        height: 100,
+        anchor: "top-right",
+        foreground: "#000000",
+        background: "#ffffff",
+        draw_background: true,
+        pages: "1",
+      },
+    ]);
+  });
+
+  it("builds pdf with multiple barcodes", () => {
+    const payload = client
+      .renderHtml("<h1>Shipping Label</h1>")
+      .pdfBarcode(BarcodeType.Code128, "SHIP-2026-001")
+      .pdfBarcode(BarcodeType.Qr, "https://track.example.com/001", {
+        anchor: BarcodeAnchor.BottomLeft,
+      })
+      .buildPayload();
+
+    assert.equal(payload.pdf?.barcodes?.length, 2);
+    assert.equal(payload.pdf?.barcodes?.[0].type, "code128");
+    assert.equal(payload.pdf?.barcodes?.[0].data, "SHIP-2026-001");
+    assert.equal(payload.pdf?.barcodes?.[0].anchor, undefined);
+    assert.equal(payload.pdf?.barcodes?.[1].type, "qr");
+    assert.equal(payload.pdf?.barcodes?.[1].anchor, "bottom-left");
+  });
+
+  it("builds pdf watermark with pages targeting", () => {
+    const payload = client
+      .renderHtml("<h1>Report</h1>")
+      .pdfWatermarkText("DRAFT")
+      .pdfWatermarkPages("1,3-5")
+      .buildPayload();
+
+    assert.equal(payload.pdf?.watermark?.text, "DRAFT");
+    assert.equal(payload.pdf?.watermark?.pages, "1,3-5");
   });
 });

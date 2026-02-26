@@ -29,6 +29,23 @@ export enum EmbedRelationship {
   Unspecified = "unspecified",
 }
 
+/** Barcode symbology type. */
+export enum BarcodeType {
+  Qr = "qr",
+  Code128 = "code128",
+  Ean13 = "ean13",
+  UpcA = "upca",
+  Code39 = "code39",
+}
+
+/** Barcode anchor position on the page. */
+export enum BarcodeAnchor {
+  TopLeft = "top-left",
+  TopRight = "top-right",
+  BottomLeft = "bottom-left",
+  BottomRight = "bottom-right",
+}
+
 /** An embedded file attachment in a PDF document. */
 export interface EmbeddedFilePayload {
   path: string;
@@ -36,6 +53,21 @@ export interface EmbeddedFilePayload {
   mime_type?: string;
   description?: string;
   relationship?: EmbedRelationship;
+}
+
+/** A barcode to render on one or more PDF pages. */
+export interface BarcodePayload {
+  type: string;
+  data: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  anchor?: string;
+  foreground?: string;
+  background?: string;
+  draw_background?: boolean;
+  pages?: string;
 }
 
 /** Built-in color palette presets. */
@@ -81,7 +113,9 @@ export interface RenderPayload {
       font_size?: number;
       scale?: number;
       layer?: WatermarkLayer;
+      pages?: string;
     };
+    barcodes?: BarcodePayload[];
   };
 }
 

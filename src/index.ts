@@ -2,6 +2,8 @@ export { ForgeError, ForgeServerError, ForgeConnectionError } from "./error.js";
 export {
   PdfStandard,
   EmbedRelationship,
+  BarcodeType,
+  BarcodeAnchor,
 } from "./types.js";
 export type {
   OutputFormat,
@@ -12,14 +14,18 @@ export type {
   PalettePreset,
   WatermarkLayer,
   EmbeddedFilePayload,
+  BarcodePayload,
 } from "./types.js";
 
 import { ForgeConnectionError, ForgeServerError } from "./error.js";
 import {
   PdfStandard,
   EmbedRelationship,
+  BarcodeType,
+  BarcodeAnchor,
 } from "./types.js";
 import type {
+  BarcodePayload,
   DitherMethod,
   EmbeddedFilePayload,
   ErrorResponse,
@@ -116,6 +122,8 @@ export class RenderRequestBuilder {
   private _pdfWatermarkLayer?: WatermarkLayer;
   private _pdfStandard?: PdfStandard;
   private _pdfEmbeddedFiles: EmbeddedFilePayload[] = [];
+  private _pdfWatermarkPages?: string;
+  private _pdfBarcodes: BarcodePayload[] = [];
 
   /** @internal */
   constructor(
@@ -309,6 +317,42 @@ export class RenderRequestBuilder {
     return this;
   }
 
+  /** PDF watermark: restrict watermark to specific pages (e.g. "1,3-5"). */
+  pdfWatermarkPages(pages: string): this {
+    this._pdfWatermarkPages = pages;
+    return this;
+  }
+
+  /** Add a barcode to the PDF output. */
+  pdfBarcode(
+    type: BarcodeType,
+    data: string,
+    opts?: {
+      x?: number;
+      y?: number;
+      width?: number;
+      height?: number;
+      anchor?: BarcodeAnchor;
+      foreground?: string;
+      background?: string;
+      drawBackground?: boolean;
+      pages?: string;
+    },
+  ): this {
+    const entry: BarcodePayload = { type, data };
+    if (opts?.x !== undefined) entry.x = opts.x;
+    if (opts?.y !== undefined) entry.y = opts.y;
+    if (opts?.width !== undefined) entry.width = opts.width;
+    if (opts?.height !== undefined) entry.height = opts.height;
+    if (opts?.anchor !== undefined) entry.anchor = opts.anchor;
+    if (opts?.foreground !== undefined) entry.foreground = opts.foreground;
+    if (opts?.background !== undefined) entry.background = opts.background;
+    if (opts?.drawBackground !== undefined) entry.draw_background = opts.drawBackground;
+    if (opts?.pages !== undefined) entry.pages = opts.pages;
+    this._pdfBarcodes.push(entry);
+    return this;
+  }
+
   /** Build the JSON payload. @internal */
   buildPayload(): RenderPayload {
     const payload: RenderPayload = { format: this._format };
@@ -345,7 +389,8 @@ export class RenderRequestBuilder {
       this._pdfWatermarkColor !== undefined ||
       this._pdfWatermarkFontSize !== undefined ||
       this._pdfWatermarkScale !== undefined ||
-      this._pdfWatermarkLayer !== undefined;
+      this._pdfWatermarkLayer !== undefined ||
+      this._pdfWatermarkPages !== undefined;
 
     if (
       this._pdfTitle !== undefined ||
@@ -356,6 +401,7 @@ export class RenderRequestBuilder {
       this._pdfBookmarks !== undefined ||
       this._pdfStandard !== undefined ||
       this._pdfEmbeddedFiles.length > 0 ||
+      this._pdfBarcodes.length > 0 ||
       hasWatermark
     ) {
       const p: NonNullable<RenderPayload["pdf"]> = {};
@@ -377,8 +423,10 @@ export class RenderRequestBuilder {
         if (this._pdfWatermarkFontSize !== undefined) wm.font_size = this._pdfWatermarkFontSize;
         if (this._pdfWatermarkScale !== undefined) wm.scale = this._pdfWatermarkScale;
         if (this._pdfWatermarkLayer !== undefined) wm.layer = this._pdfWatermarkLayer;
+        if (this._pdfWatermarkPages !== undefined) wm.pages = this._pdfWatermarkPages;
         p.watermark = wm;
       }
+      if (this._pdfBarcodes.length > 0) p.barcodes = this._pdfBarcodes;
       payload.pdf = p;
     }
 
