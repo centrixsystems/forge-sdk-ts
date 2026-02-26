@@ -90,4 +90,48 @@ describe("RenderRequestBuilder", () => {
 
     assert.equal(payload.quantize, undefined);
   });
+
+  it("builds pdf metadata payload", () => {
+    const payload = client
+      .renderHtml("<h1>Report</h1>")
+      .format("pdf")
+      .pdfTitle("Quarterly Report")
+      .pdfAuthor("Centrix Systems")
+      .pdfSubject("Q4 2025 Financial Summary")
+      .pdfKeywords("finance,quarterly,report")
+      .pdfCreator("Centrix ERP")
+      .pdfBookmarks(true)
+      .buildPayload();
+
+    assert.deepEqual(payload.pdf, {
+      title: "Quarterly Report",
+      author: "Centrix Systems",
+      subject: "Q4 2025 Financial Summary",
+      keywords: "finance,quarterly,report",
+      creator: "Centrix ERP",
+      bookmarks: true,
+    });
+  });
+
+  it("builds pdf with partial options", () => {
+    const payload = client
+      .renderHtml("<h1>Hello</h1>")
+      .pdfTitle("My Doc")
+      .pdfBookmarks(false)
+      .buildPayload();
+
+    assert.deepEqual(payload.pdf, {
+      title: "My Doc",
+      bookmarks: false,
+    });
+  });
+
+  it("omits pdf when unset", () => {
+    const payload = client
+      .renderHtml("<p>test</p>")
+      .format("pdf")
+      .buildPayload();
+
+    assert.equal(payload.pdf, undefined);
+  });
 });

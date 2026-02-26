@@ -35,6 +35,14 @@ export interface RenderPayload {
     palette?: Palette;
     dither?: DitherMethod;
   };
+  pdf?: {
+    title?: string;
+    author?: string;
+    subject?: string;
+    keywords?: string;
+    creator?: string;
+    bookmarks?: boolean;
+  };
 }
 
 /** Server error response body. */

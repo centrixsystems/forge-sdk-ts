@@ -88,6 +88,12 @@ export class RenderRequestBuilder {
   private _colors?: number;
   private _palette?: Palette;
   private _dither?: DitherMethod;
+  private _pdfTitle?: string;
+  private _pdfAuthor?: string;
+  private _pdfSubject?: string;
+  private _pdfKeywords?: string;
+  private _pdfCreator?: string;
+  private _pdfBookmarks?: boolean;
 
   /** @internal */
   constructor(
@@ -177,6 +183,42 @@ export class RenderRequestBuilder {
     return this;
   }
 
+  /** PDF metadata: document title. */
+  pdfTitle(title: string): this {
+    this._pdfTitle = title;
+    return this;
+  }
+
+  /** PDF metadata: document author. */
+  pdfAuthor(author: string): this {
+    this._pdfAuthor = author;
+    return this;
+  }
+
+  /** PDF metadata: document subject. */
+  pdfSubject(subject: string): this {
+    this._pdfSubject = subject;
+    return this;
+  }
+
+  /** PDF metadata: comma-separated keywords. */
+  pdfKeywords(keywords: string): this {
+    this._pdfKeywords = keywords;
+    return this;
+  }
+
+  /** PDF metadata: creator application name. */
+  pdfCreator(creator: string): this {
+    this._pdfCreator = creator;
+    return this;
+  }
+
+  /** PDF bookmarks: generate from headings. */
+  pdfBookmarks(enabled: boolean): this {
+    this._pdfBookmarks = enabled;
+    return this;
+  }
+
   /** Build the JSON payload. @internal */
   buildPayload(): RenderPayload {
     const payload: RenderPayload = { format: this._format };
@@ -203,6 +245,24 @@ export class RenderRequestBuilder {
       if (this._palette !== undefined) q.palette = this._palette;
       if (this._dither !== undefined) q.dither = this._dither;
       payload.quantize = q;
+    }
+
+    if (
+      this._pdfTitle !== undefined ||
+      this._pdfAuthor !== undefined ||
+      this._pdfSubject !== undefined ||
+      this._pdfKeywords !== undefined ||
+      this._pdfCreator !== undefined ||
+      this._pdfBookmarks !== undefined
+    ) {
+      const p: NonNullable<RenderPayload["pdf"]> = {};
+      if (this._pdfTitle !== undefined) p.title = this._pdfTitle;
+      if (this._pdfAuthor !== undefined) p.author = this._pdfAuthor;
+      if (this._pdfSubject !== undefined) p.subject = this._pdfSubject;
+      if (this._pdfKeywords !== undefined) p.keywords = this._pdfKeywords;
+      if (this._pdfCreator !== undefined) p.creator = this._pdfCreator;
+      if (this._pdfBookmarks !== undefined) p.bookmarks = this._pdfBookmarks;
+      payload.pdf = p;
     }
 
     return payload;

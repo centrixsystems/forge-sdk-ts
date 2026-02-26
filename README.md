@@ -73,6 +73,23 @@ const img = await client.renderHtml("<h1>Brand</h1>")
   .send();
 ```
 
+### PDF Metadata
+
+Set PDF document properties and enable bookmark generation.
+
+```typescript
+const pdf = await client.renderHtml("<h1>Report</h1><h2>Section 1</h2>")
+  .format("pdf")
+  .paper("a4")
+  .pdfTitle("Quarterly Report")
+  .pdfAuthor("Centrix Systems")
+  .pdfSubject("Q4 2025 Financial Summary")
+  .pdfKeywords("finance,quarterly,report")
+  .pdfCreator("Centrix ERP")
+  .pdfBookmarks(true)
+  .send();
+```
+
 ### Custom Timeout
 
 ```typescript
@@ -126,6 +143,12 @@ All methods return `this` for chaining. Call `.send()` to execute.
 | `colors` | `number` | Quantization color count (2-256) |
 | `palette` | `Palette` | Preset string or array of hex color strings |
 | `dither` | `DitherMethod` | Dithering algorithm |
+| `pdfTitle` | `string` | PDF document title |
+| `pdfAuthor` | `string` | PDF document author |
+| `pdfSubject` | `string` | PDF document subject |
+| `pdfKeywords` | `string` | PDF keywords (comma-separated) |
+| `pdfCreator` | `string` | PDF creator application name |
+| `pdfBookmarks` | `boolean` | Generate bookmarks from headings |
 
 | Terminal Method | Returns | Description |
 |-----------------|---------|-------------|
