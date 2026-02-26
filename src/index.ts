@@ -48,15 +48,15 @@ export class ForgeClient {
   /** Check if the server is healthy. */
   async health(): Promise<boolean> {
     try {
-      const resp = await this.fetch("/health", { method: "GET" });
+      const resp = await this.doFetch("/health", { method: "GET" });
       return resp.ok;
     } catch {
       return false;
     }
   }
 
-  /** @internal */
-  async fetch(path: string, init: RequestInit): Promise<Response> {
+  /** @internal — not part of the public API. */
+  async doFetch(path: string, init: RequestInit): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeout);
     try {
@@ -73,21 +73,21 @@ export class ForgeClient {
 /** Builder for a render request. */
 export class RenderRequestBuilder {
   private readonly client: ForgeClient;
-  private readonly html?: string;
-  private readonly url?: string;
-  private fmt: OutputFormat = "pdf";
-  private w?: number;
-  private h?: number;
-  private pap?: string;
-  private orient?: Orientation;
-  private marg?: string;
-  private fl?: Flow;
-  private dens?: number;
-  private bg?: string;
-  private tout?: number;
-  private col?: number;
-  private pal?: Palette;
-  private dit?: DitherMethod;
+  private readonly _html?: string;
+  private readonly _url?: string;
+  private _format: OutputFormat = "pdf";
+  private _width?: number;
+  private _height?: number;
+  private _paper?: string;
+  private _orientation?: Orientation;
+  private _margins?: string;
+  private _flow?: Flow;
+  private _density?: number;
+  private _background?: string;
+  private _timeout?: number;
+  private _colors?: number;
+  private _palette?: Palette;
+  private _dither?: DitherMethod;
 
   /** @internal */
   constructor(
@@ -95,109 +95,113 @@ export class RenderRequestBuilder {
     source: { html?: string; url?: string },
   ) {
     this.client = client;
-    this.html = source.html;
-    this.url = source.url;
+    this._html = source.html;
+    this._url = source.url;
   }
 
   /** Output format (default: "pdf"). */
-  format(fmt: OutputFormat): this {
-    this.fmt = fmt;
+  format(format: OutputFormat): this {
+    this._format = format;
     return this;
   }
 
   /** Viewport width in CSS pixels. */
   width(px: number): this {
-    this.w = px;
+    this._width = px;
     return this;
   }
 
   /** Viewport height in CSS pixels. */
   height(px: number): this {
-    this.h = px;
+    this._height = px;
     return this;
   }
 
   /** Paper size: a3, a4, a5, b4, b5, letter, legal, ledger. */
   paper(size: string): this {
-    this.pap = size;
+    this._paper = size;
     return this;
   }
 
   /** Page orientation. */
   orientation(o: Orientation): this {
-    this.orient = o;
+    this._orientation = o;
     return this;
   }
 
   /** Margins preset or "T,R,B,L" in mm. */
   margins(m: string): this {
-    this.marg = m;
+    this._margins = m;
     return this;
   }
 
   /** Document flow mode. */
   flow(f: Flow): this {
-    this.fl = f;
+    this._flow = f;
     return this;
   }
 
   /** Output DPI (default: 96). */
   density(dpi: number): this {
-    this.dens = dpi;
+    this._density = dpi;
     return this;
   }
 
   /** Background CSS color. */
   background(color: string): this {
-    this.bg = color;
+    this._background = color;
     return this;
   }
 
   /** Page load timeout in seconds. */
   timeout(seconds: number): this {
-    this.tout = seconds;
+    this._timeout = seconds;
     return this;
   }
 
   /** Number of colors for quantization (2-256). */
   colors(n: number): this {
-    this.col = n;
+    this._colors = n;
     return this;
   }
 
   /** Color palette preset or custom hex colors. */
   palette(p: Palette): this {
-    this.pal = p;
+    this._palette = p;
     return this;
   }
 
   /** Dithering algorithm. */
   dither(method: DitherMethod): this {
-    this.dit = method;
+    this._dither = method;
     return this;
   }
 
   /** Build the JSON payload. @internal */
   buildPayload(): RenderPayload {
-    const payload: RenderPayload = { format: this.fmt };
+    const payload: RenderPayload = { format: this._format };
 
-    if (this.html !== undefined) payload.html = this.html;
-    if (this.url !== undefined) payload.url = this.url;
-    if (this.w !== undefined) payload.width = this.w;
-    if (this.h !== undefined) payload.height = this.h;
-    if (this.pap !== undefined) payload.paper = this.pap;
-    if (this.orient !== undefined) payload.orientation = this.orient;
-    if (this.marg !== undefined) payload.margins = this.marg;
-    if (this.fl !== undefined) payload.flow = this.fl;
-    if (this.dens !== undefined) payload.density = this.dens;
-    if (this.bg !== undefined) payload.background = this.bg;
-    if (this.tout !== undefined) payload.timeout = this.tout;
+    if (this._html !== undefined) payload.html = this._html;
+    if (this._url !== undefined) payload.url = this._url;
+    if (this._width !== undefined) payload.width = this._width;
+    if (this._height !== undefined) payload.height = this._height;
+    if (this._paper !== undefined) payload.paper = this._paper;
+    if (this._orientation !== undefined) payload.orientation = this._orientation;
+    if (this._margins !== undefined) payload.margins = this._margins;
+    if (this._flow !== undefined) payload.flow = this._flow;
+    if (this._density !== undefined) payload.density = this._density;
+    if (this._background !== undefined) payload.background = this._background;
+    if (this._timeout !== undefined) payload.timeout = this._timeout;
 
-    if (this.col !== undefined || this.pal !== undefined || this.dit !== undefined) {
+    if (
+      this._colors !== undefined ||
+      this._palette !== undefined ||
+      this._dither !== undefined
+    ) {
       const q: NonNullable<RenderPayload["quantize"]> = {};
-      if (this.col !== undefined) q.colors = this.col;
-      if (this.pal !== undefined) q.palette = this.pal;
-      if (this.dit !== undefined) q.dither = this.dit;
+      if (this._colors !== undefined) q.colors = this._colors;
+      if (this._palette !== undefined) q.palette = this._palette;
+      if (this._dither !== undefined) q.dither = this._dither;
       payload.quantize = q;
     }
 
@@ -210,7 +214,7 @@ export class RenderRequestBuilder {
 
     let resp: Response;
     try {
-      resp = await this.client.fetch("/render", {
+      resp = await this.client.doFetch("/render", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
