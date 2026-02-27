@@ -186,6 +186,7 @@ All methods return `this` for chaining. Call `.send()` to execute.
 | `pdfKeywords` | `string` | PDF keywords (comma-separated) |
 | `pdfCreator` | `string` | PDF creator application name |
 | `pdfBookmarks` | `boolean` | Generate bookmarks from headings |
+| `pdfPageNumbers` | `boolean` | Add "Page X of Y" footers to each page |
 | `pdfWatermarkText` | `string` | Watermark text on each page |
 | `pdfWatermarkImage` | `string` | Base64-encoded PNG/JPEG watermark image |
 | `pdfWatermarkOpacity` | `number` | Watermark opacity (0.0-1.0, default: 0.15) |

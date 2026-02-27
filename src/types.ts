@@ -46,6 +46,29 @@ export enum BarcodeAnchor {
   BottomRight = "bottom-right",
 }
 
+/** PDF rendering mode. */
+export type PdfMode = "auto" | "vector" | "raster";
+
+/** PDF accessibility tagging level. */
+export type AccessibilityLevel = "none" | "basic" | "pdf/ua-1";
+
+/** Options for digitally signing a PDF document. */
+export interface SignatureOptions {
+  certificate_data?: string;
+  password?: string;
+  signer_name?: string;
+  reason?: string;
+  location?: string;
+  timestamp_url?: string;
+}
+
+/** Options for encrypting a PDF document. */
+export interface EncryptionOptions {
+  user_password?: string;
+  owner_password?: string;
+  permissions?: string;
+}
+
 /** An embedded file attachment in a PDF document. */
 export interface EmbeddedFilePayload {
   path: string;
@@ -102,6 +125,7 @@ export interface RenderPayload {
     keywords?: string;
     creator?: string;
     bookmarks?: boolean;
+    page_numbers?: boolean;
     standard?: PdfStandard;
     embedded_files?: EmbeddedFilePayload[];
     watermark?: {
@@ -116,6 +140,11 @@ export interface RenderPayload {
       pages?: string;
     };
     barcodes?: BarcodePayload[];
+    mode?: PdfMode;
+    signature?: SignatureOptions;
+    encryption?: EncryptionOptions;
+    accessibility?: AccessibilityLevel;
+    linearize?: boolean;
   };
 }
 

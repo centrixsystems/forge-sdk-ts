@@ -15,6 +15,10 @@ export type {
   WatermarkLayer,
   EmbeddedFilePayload,
   BarcodePayload,
+  PdfMode,
+  AccessibilityLevel,
+  SignatureOptions,
+  EncryptionOptions,
 } from "./types.js";
 
 import { ForgeConnectionError, ForgeServerError } from "./error.js";
@@ -25,6 +29,7 @@ import {
   BarcodeAnchor,
 } from "./types.js";
 import type {
+  AccessibilityLevel,
   BarcodePayload,
   DitherMethod,
   EmbeddedFilePayload,
@@ -33,6 +38,7 @@ import type {
   Orientation,
   OutputFormat,
   Palette,
+  PdfMode,
   RenderPayload,
   WatermarkLayer,
 } from "./types.js";
@@ -112,6 +118,7 @@ export class RenderRequestBuilder {
   private _pdfKeywords?: string;
   private _pdfCreator?: string;
   private _pdfBookmarks?: boolean;
+  private _pdfPageNumbers?: boolean;
   private _pdfWatermarkText?: string;
   private _pdfWatermarkImage?: string;
   private _pdfWatermarkOpacity?: number;
@@ -124,6 +131,18 @@ export class RenderRequestBuilder {
   private _pdfEmbeddedFiles: EmbeddedFilePayload[] = [];
   private _pdfWatermarkPages?: string;
   private _pdfBarcodes: BarcodePayload[] = [];
+  private _pdfMode?: PdfMode;
+  private _pdfSignCertificate?: string;
+  private _pdfSignPassword?: string;
+  private _pdfSignName?: string;
+  private _pdfSignReason?: string;
+  private _pdfSignLocation?: string;
+  private _pdfSignTimestampUrl?: string;
+  private _pdfUserPassword?: string;
+  private _pdfOwnerPassword?: string;
+  private _pdfPermissions?: string;
+  private _pdfAccessibility?: AccessibilityLevel;
+  private _pdfLinearize?: boolean;
 
   /** @internal */
   constructor(
@@ -249,6 +268,12 @@ export class RenderRequestBuilder {
     return this;
   }
 
+  /** PDF page numbers: add "Page X of Y" footers to each page. */
+  pdfPageNumbers(enabled: boolean): this {
+    this._pdfPageNumbers = enabled;
+    return this;
+  }
+
   /** PDF watermark: text to render as watermark. */
   pdfWatermarkText(text: string): this {
     this._pdfWatermarkText = text;
@@ -353,6 +378,78 @@ export class RenderRequestBuilder {
     return this;
   }
 
+  /** PDF rendering mode: auto, vector, or raster. */
+  pdfMode(mode: PdfMode): this {
+    this._pdfMode = mode;
+    return this;
+  }
+
+  /** PDF digital signature: base64-encoded PKCS#12 certificate data. */
+  pdfSignCertificate(base64Data: string): this {
+    this._pdfSignCertificate = base64Data;
+    return this;
+  }
+
+  /** PDF digital signature: certificate password. */
+  pdfSignPassword(password: string): this {
+    this._pdfSignPassword = password;
+    return this;
+  }
+
+  /** PDF digital signature: signer display name. */
+  pdfSignName(name: string): this {
+    this._pdfSignName = name;
+    return this;
+  }
+
+  /** PDF digital signature: reason for signing. */
+  pdfSignReason(reason: string): this {
+    this._pdfSignReason = reason;
+    return this;
+  }
+
+  /** PDF digital signature: signing location. */
+  pdfSignLocation(location: string): this {
+    this._pdfSignLocation = location;
+    return this;
+  }
+
+  /** PDF digital signature: timestamp authority URL. */
+  pdfSignTimestampUrl(url: string): this {
+    this._pdfSignTimestampUrl = url;
+    return this;
+  }
+
+  /** PDF encryption: user password (required to open). */
+  pdfUserPassword(password: string): this {
+    this._pdfUserPassword = password;
+    return this;
+  }
+
+  /** PDF encryption: owner password (required to change permissions). */
+  pdfOwnerPassword(password: string): this {
+    this._pdfOwnerPassword = password;
+    return this;
+  }
+
+  /** PDF encryption: permission flags. */
+  pdfPermissions(permissions: string): this {
+    this._pdfPermissions = permissions;
+    return this;
+  }
+
+  /** PDF accessibility tagging level. */
+  pdfAccessibility(level: AccessibilityLevel): this {
+    this._pdfAccessibility = level;
+    return this;
+  }
+
+  /** PDF linearization (fast web view). */
+  pdfLinearize(enabled: boolean): this {
+    this._pdfLinearize = enabled;
+    return this;
+  }
+
   /** Build the JSON payload. @internal */
   buildPayload(): RenderPayload {
     const payload: RenderPayload = { format: this._format };
@@ -392,6 +489,19 @@ export class RenderRequestBuilder {
       this._pdfWatermarkLayer !== undefined ||
       this._pdfWatermarkPages !== undefined;
 
+    const hasSignature =
+      this._pdfSignCertificate !== undefined ||
+      this._pdfSignPassword !== undefined ||
+      this._pdfSignName !== undefined ||
+      this._pdfSignReason !== undefined ||
+      this._pdfSignLocation !== undefined ||
+      this._pdfSignTimestampUrl !== undefined;
+
+    const hasEncryption =
+      this._pdfUserPassword !== undefined ||
+      this._pdfOwnerPassword !== undefined ||
+      this._pdfPermissions !== undefined;
+
     if (
       this._pdfTitle !== undefined ||
       this._pdfAuthor !== undefined ||
@@ -399,10 +509,16 @@ export class RenderRequestBuilder {
       this._pdfKeywords !== undefined ||
       this._pdfCreator !== undefined ||
       this._pdfBookmarks !== undefined ||
+      this._pdfPageNumbers !== undefined ||
       this._pdfStandard !== undefined ||
       this._pdfEmbeddedFiles.length > 0 ||
       this._pdfBarcodes.length > 0 ||
-      hasWatermark
+      this._pdfMode !== undefined ||
+      this._pdfAccessibility !== undefined ||
+      this._pdfLinearize !== undefined ||
+      hasWatermark ||
+      hasSignature ||
+      hasEncryption
     ) {
       const p: NonNullable<RenderPayload["pdf"]> = {};
       if (this._pdfTitle !== undefined) p.title = this._pdfTitle;
@@ -411,6 +527,7 @@ export class RenderRequestBuilder {
       if (this._pdfKeywords !== undefined) p.keywords = this._pdfKeywords;
       if (this._pdfCreator !== undefined) p.creator = this._pdfCreator;
       if (this._pdfBookmarks !== undefined) p.bookmarks = this._pdfBookmarks;
+      if (this._pdfPageNumbers !== undefined) p.page_numbers = this._pdfPageNumbers;
       if (this._pdfStandard !== undefined) p.standard = this._pdfStandard;
       if (this._pdfEmbeddedFiles.length > 0) p.embedded_files = this._pdfEmbeddedFiles;
       if (hasWatermark) {
@@ -427,6 +544,26 @@ export class RenderRequestBuilder {
         p.watermark = wm;
       }
       if (this._pdfBarcodes.length > 0) p.barcodes = this._pdfBarcodes;
+      if (this._pdfMode !== undefined) p.mode = this._pdfMode;
+      if (hasSignature) {
+        const sig: NonNullable<NonNullable<RenderPayload["pdf"]>["signature"]> = {};
+        if (this._pdfSignCertificate !== undefined) sig.certificate_data = this._pdfSignCertificate;
+        if (this._pdfSignPassword !== undefined) sig.password = this._pdfSignPassword;
+        if (this._pdfSignName !== undefined) sig.signer_name = this._pdfSignName;
+        if (this._pdfSignReason !== undefined) sig.reason = this._pdfSignReason;
+        if (this._pdfSignLocation !== undefined) sig.location = this._pdfSignLocation;
+        if (this._pdfSignTimestampUrl !== undefined) sig.timestamp_url = this._pdfSignTimestampUrl;
+        p.signature = sig;
+      }
+      if (hasEncryption) {
+        const enc: NonNullable<NonNullable<RenderPayload["pdf"]>["encryption"]> = {};
+        if (this._pdfUserPassword !== undefined) enc.user_password = this._pdfUserPassword;
+        if (this._pdfOwnerPassword !== undefined) enc.owner_password = this._pdfOwnerPassword;
+        if (this._pdfPermissions !== undefined) enc.permissions = this._pdfPermissions;
+        p.encryption = enc;
+      }
+      if (this._pdfAccessibility !== undefined) p.accessibility = this._pdfAccessibility;
+      if (this._pdfLinearize !== undefined) p.linearize = this._pdfLinearize;
       payload.pdf = p;
     }
 
