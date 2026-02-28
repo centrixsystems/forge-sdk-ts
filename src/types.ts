@@ -145,6 +145,7 @@ export interface RenderPayload {
     encryption?: EncryptionOptions;
     accessibility?: AccessibilityLevel;
     linearize?: boolean;
+    document_lang?: string;
   };
 }
 

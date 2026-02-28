@@ -143,6 +143,7 @@ export class RenderRequestBuilder {
   private _pdfPermissions?: string;
   private _pdfAccessibility?: AccessibilityLevel;
   private _pdfLinearize?: boolean;
+  private _pdfLang?: string;
 
   /** @internal */
   constructor(
@@ -450,6 +451,12 @@ export class RenderRequestBuilder {
     return this;
   }
 
+  /** Document language as a BCP 47 tag (e.g. "en-US"). Required for PDF/UA-1. */
+  pdfLang(lang: string): this {
+    this._pdfLang = lang;
+    return this;
+  }
+
   /** Build the JSON payload. @internal */
   buildPayload(): RenderPayload {
     const payload: RenderPayload = { format: this._format };
@@ -516,6 +523,7 @@ export class RenderRequestBuilder {
       this._pdfMode !== undefined ||
       this._pdfAccessibility !== undefined ||
       this._pdfLinearize !== undefined ||
+      this._pdfLang !== undefined ||
       hasWatermark ||
       hasSignature ||
       hasEncryption
@@ -564,6 +572,7 @@ export class RenderRequestBuilder {
       }
       if (this._pdfAccessibility !== undefined) p.accessibility = this._pdfAccessibility;
       if (this._pdfLinearize !== undefined) p.linearize = this._pdfLinearize;
+      if (this._pdfLang !== undefined) p.document_lang = this._pdfLang;
       payload.pdf = p;
     }
 
