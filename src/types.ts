@@ -31,11 +31,21 @@ export enum EmbedRelationship {
 
 /** Barcode symbology type. */
 export enum BarcodeType {
+  // 2D types
   Qr = "qr",
+  DataMatrix = "datamatrix",
+  Pdf417 = "pdf417",
+  Aztec = "aztec",
+  // 1D types
   Code128 = "code128",
   Ean13 = "ean13",
+  Ean8 = "ean8",
   UpcA = "upca",
   Code39 = "code39",
+  Code93 = "code93",
+  Codabar = "codabar",
+  Itf = "itf",
+  Code11 = "code11",
 }
 
 /** Barcode anchor position on the page. */
