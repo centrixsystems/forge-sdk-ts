@@ -163,3 +163,11 @@ export interface RenderPayload {
 export interface ErrorResponse {
   error: string;
 }
+
+/** Response from a render request, including any CSS compatibility warnings. */
+export interface RenderResponse {
+  /** The rendered output bytes (PDF, PNG, etc.). */
+  data: Uint8Array;
+  /** CSS compatibility warnings from the Forge server. */
+  warnings: string[];
+}

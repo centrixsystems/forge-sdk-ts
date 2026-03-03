@@ -19,6 +19,7 @@ export type {
   AccessibilityLevel,
   SignatureOptions,
   EncryptionOptions,
+  RenderResponse,
 } from "./types.js";
 
 import { ForgeConnectionError, ForgeServerError } from "./error.js";
@@ -40,6 +41,7 @@ import type {
   Palette,
   PdfMode,
   RenderPayload,
+  RenderResponse,
   WatermarkLayer,
 } from "./types.js";
 
@@ -607,5 +609,42 @@ export class RenderRequestBuilder {
 
     const buf = await resp.arrayBuffer();
     return new Uint8Array(buf);
+  }
+
+  /** Send the render request and return the full response including warnings. */
+  async sendWithWarnings(): Promise<RenderResponse> {
+    const payload = this.buildPayload();
+
+    let resp: Response;
+    try {
+      resp = await this.client.doFetch("/render", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      throw new ForgeConnectionError(e);
+    }
+
+    if (!resp.ok) {
+      let message: string;
+      try {
+        const body = (await resp.json()) as ErrorResponse;
+        message = body.error;
+      } catch {
+        message = `HTTP ${resp.status}`;
+      }
+      throw new ForgeServerError(resp.status, message);
+    }
+
+    // The Fetch API coalesces duplicate headers into a single comma-joined value.
+    // Split on ", " to recover individual warning strings.
+    const raw = resp.headers.get("X-Forge-Warning");
+    const warnings: string[] = raw
+      ? raw.split(",").map((w) => w.trim()).filter((w) => w.length > 0)
+      : [];
+
+    const buf = await resp.arrayBuffer();
+    return { data: new Uint8Array(buf), warnings };
   }
 }
